@@ -1,4 +1,3 @@
-import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import path from 'path'
@@ -25,8 +24,12 @@ app.get('/api/hello', (req, res) => {
 })
 
 import { logger } from './services/logger.service.js'
+import { collectorService } from './services/collector.service.js'
+
 const port = process.env.PORT || 3030
 
 app.listen(port, () => {
     logger.info('Server is running on port: ' + port)
+
+    collectorService.initiateCollector()
 })
