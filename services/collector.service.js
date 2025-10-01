@@ -82,8 +82,9 @@ async function collectData(browser, domain) {
         })
 
         const hasStreaming = await checkStreaming(page, requestedUrls)
+        const hasAds = await checkGoogleAds(page, requestedUrls)
 
-        const res = { domain, hasStreaming }
+        const res = { domain, hasStreaming, hasAds }
         return res
 
     } catch (error) {
@@ -92,6 +93,7 @@ async function collectData(browser, domain) {
         return {
             domain,
             hasStreaming: false,
+            hasAds: false,
             error: error.message
         }
     } finally {
@@ -135,4 +137,23 @@ async function checkStreaming(page, requestedUrls) {
         logger.error(`Error checking streaming for ${page.url()}:`, err.message)
         return false
     }
+}
+
+async function checkGoogleAds(page, requestedUrls) {
+    // 1. Network Check: The most reliable sign of Google Ads
+    if ([...requestedUrls].some(url => url.includes('googlesyndication.com') || url.includes('doubleclick.net'))) {
+        return true
+    }
+
+    // 2. DOM Check: Fallback for specific ad elements
+    return page.evaluate(() => {
+        // Check for the container Google uses for AdSense
+        const hasAdSenseElement = document.querySelector('.adsbygoogle')
+        if (hasAdSenseElement) return true
+
+        // Check for ad-related iframes
+        return [...document.querySelectorAll('iframe')].some(iframe =>
+            iframe.id.includes('google_ads_iframe') || iframe.src.includes('googleads')
+        )
+    })
 }
