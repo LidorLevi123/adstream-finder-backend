@@ -1,6 +1,7 @@
 import puppeteer from 'puppeteer'
 import pLimit from 'p-limit'
 import { logger } from './logger.service.js'
+import { csvService } from './csv.service.js'
 
 const DOMAINS = [
     'twitch.tv',
@@ -30,6 +31,7 @@ export const collectorService = {
 }
 
 async function initiateCollector() {
+    logger.info('Initiating collector...')
     const browser = await puppeteer.launch({
         headless: 'new',
         args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -39,8 +41,8 @@ async function initiateCollector() {
         const limit = pLimit(5) // Allowing 5 domains to be analyzed at the same time
         const tasks = DOMAINS.map(domain => limit(() => collectData(browser, domain)))
         const res = await Promise.all(tasks)
-
-        logger.debug('res:', JSON.stringify(res, null, 2))
+        await csvService.exportToCSV(res, 'collector-data')
+        logger.info('Collector data collected successfully')
     } catch (err) {
         logger.error('An unexpected error occurred in the collector:', err)
     } finally {
