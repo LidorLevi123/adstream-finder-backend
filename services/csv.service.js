@@ -2,6 +2,9 @@ import { createObjectCsvWriter } from 'csv-writer'
 import { parse } from 'csv-parse'
 import fs from 'fs'
 
+// Predefined columns for different types of data
+const COLUMNS = ['domain', 'hasStreaming', 'hasAds', 'error']
+
 export const csvService = {
     exportToCSV,
     parseCSV
@@ -17,8 +20,8 @@ async function exportToCSV(data, filename) {
 
         const outputPath = `./data/${filename}.csv`
 
-        // Get headers from the first object's keys
-        const headers = Object.keys(data[0]).map(key => ({
+        // Get columns based on type
+        const headers = COLUMNS.map(key => ({
             id: key,
             title: key
         }))
@@ -56,6 +59,12 @@ async function parseCSV(filename) {
                 columns: true, // Automatically detect columns from header row
                 skip_empty_lines: true,
                 trim: true, // Trim whitespace from values
+                cast: (value, context) => {
+                    if (context.column === 'hasStreaming' || context.column === 'hasAds') {
+                        return value.toLowerCase() === 'true'
+                    }
+                    return value
+                }
             }, (err, data) => {
                 if (err) {
                     reject(new Error(`Failed to parse CSV: ${err.message}`))
