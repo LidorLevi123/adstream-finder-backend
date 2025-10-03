@@ -33,6 +33,11 @@ app.get('/api/collector-data', async (req, res) => {
     }
 })
 
+// Handle React routing, return all requests to React app
+app.get('*', (req, res) => {
+    res.sendFile(path.resolve('public/index.html'))
+})
+
 const port = process.env.PORT || 3030
 
 app.listen(port, () => {
